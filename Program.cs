@@ -18,6 +18,8 @@ public class Program
 
         builder.Services.AddDbContext<Contexto>(options => options.UseSqlite(ConnectionString));
 
+        builder.Services.AddScoped<RegistroService>();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
