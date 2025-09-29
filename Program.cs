@@ -18,7 +18,7 @@ public class Program
 
         builder.Services.AddDbContext<Contexto>(options => options.UseSqlite(ConnectionString));
 
-        builder.Services.AddScoped<RegistroService>();
+        builder.Services.AddScoped<EntradasHuacalesServices>();
 
         var app = builder.Build();
 
