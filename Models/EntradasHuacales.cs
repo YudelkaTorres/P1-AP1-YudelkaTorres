@@ -4,5 +4,17 @@ namespace P1_AP1_YudelkaTorres.Models;
 public class EntradasHuacales
 {
 	[Key]
-	public int Id { get; set; }
+	public int EntradaId { get; set; }
+    public DateTime Fecha { get; set; } = DateTime.Now;
+    [RegularExpression(@"^[a-zA-Z\s]+$", ErrorMessage = "No se permiten caracteres especiales")]
+    [Required(ErrorMessage = "El cliente es obligatorio")]
+    public string NombreCliente { get; set; } = string.Empty;
+
+    [Required]
+    [Range(0.0, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 1")]
+    public int Cantidad { get; set; }
+
+    [Required]
+    [Range(0.0, double.MaxValue, ErrorMessage = "El precio debe ser mayor o igual a 0")]
+    public decimal Precio { get; set; }
 }
