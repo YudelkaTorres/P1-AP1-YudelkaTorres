@@ -1,6 +1,7 @@
 using P1_AP1_YudelkaTorres.Components;
 using P1_AP1_YudelkaTorres.DAL;
 using Microsoft.EntityFrameworkCore;
+using P1_AP1_YudelkaTorres.Service;
 
 namespace P1_AP1_YudelkaTorres;
 
@@ -16,7 +17,7 @@ public class Program
 
         var ConnectionString = builder.Configuration.GetConnectionString("SqlConstr");
 
-        builder.Services.AddDbContext<Contexto>(options => options.UseSqlite(ConnectionString));
+        builder.Services.AddDbContextFactory<Contexto>(options => options.UseSqlite(ConnectionString));
 
         builder.Services.AddScoped<EntradasHuacalesServices>();
 
