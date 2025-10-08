@@ -7,15 +7,16 @@
 
 <PageTitle>Editar Entrada de Huacales</PageTitle>
 
-<div class="container">
-    <div class="card shadow-sm">
-        <div class="card-header text-center">
-            <h5 class="card-title">Editar Entrada de Huacales</h5>
-        </div>
-        <div class="card-body">
-            <EditForm Model="Entrada" OnValidSubmit="Guardar">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+<EditForm Model="Entrada" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="container">
+        <div class="card shadow-sm">
+            <div class="card-header text-center">
+                <h5 class="card-title">Editar Entrada de Huacales</h5>
+            </div>
+
+            <div class="card-body">
 
                 <div class="row">
                     @* EntradaId *@
@@ -53,6 +54,12 @@
                     </div>
                 </div>
 
+                @* Importe *@
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Importe:</label>
+                    <input class="form-control bg-light" value="@Importe.ToString("C")" readonly />
+                </div>
+
                 @* Footer *@
                 <div class="card-footer text-center mt-2">
                     <a href="/EntradasHuacales/Index" class="btn btn-secondary">
@@ -60,15 +67,15 @@
                     </a>
                     <button type="submit" class="btn btn-primary bi bi-floppy"> Guardar</button>
                 </div>
-            </EditForm>
-
-            @if (!string.IsNullOrWhiteSpace(Mensaje))
-            {
-                <div class="alert alert-warning mt-2">@Mensaje</div>
-            }
+            </div>
         </div>
     </div>
-</div>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(Mensaje))
+{
+    <div class="alert alert-warning mt-2">@Mensaje</div>
+}
 
 @code {
     [Parameter]
@@ -76,6 +83,12 @@
 
     public EntradasHuacales Entrada { get; set; } = new();
     public string Mensaje { get; set; } = string.Empty;
+    public decimal Importe { get; set; }
+
+    private void CalcularImporte(ChangeEventArgs? e = null)
+    {
+        Importe = Entrada.Cantidad * Entrada.Precio;
+    }
 
     protected override async Task OnInitializedAsync()
     {

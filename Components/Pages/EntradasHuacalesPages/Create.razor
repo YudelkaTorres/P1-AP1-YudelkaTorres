@@ -6,17 +6,17 @@
 @rendermode InteractiveServer
 
 <PageTitle>Crear Entrada de Huacales</PageTitle>
+<EditForm Model="Entrada" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
 
-<div class="container">
-    <div class="card shadow-sm">
-        <div class="card-header text-center">
-            <h5 class="card-title">Crear Entrada de Huacales</h5>
-        </div>
-        <div class="card-body">
-            <EditForm Model="Entrada" OnValidSubmit="Guardar">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+    <div class="container">
+        <div class="card shadow-lg">
+             <div class="card-header text-center">
+                   <h5 class="card-title">Crear Entrada de Huacales</h5>
+             </div>
 
+            <div class="card-body">
+            
                 <div class="row">
                     @* EntradaId *@
                     <div class="mb-3">
@@ -53,29 +53,45 @@
                     </div>
                 </div>
 
+                @* Importe *@
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Importe:</label>
+                    <input class="form-control bg-light" value="@Importe.ToString("C")" readonly />
+                </div>
+
                 @* Footer *@
                 <div class="card-footer text-center mt-2">
-                    <a href="/EntradasHuacales/Index" class="btn btn-secondary">
-                        <span class="bi bi-arrow-left"></span> Volver
-                    </a>
+                    <a href="/EntradasHuacales/Index" class="btn btn-secondary"><span class="bi bi-arrow-left"></span> Volver</a>
                     <button type="submit" class="btn btn-primary bi bi-floppy"> Guardar</button>
                 </div>
-            </EditForm>
-
-            @if (!string.IsNullOrWhiteSpace(Mensaje))
-            {
-                <div class="alert alert-warning mt-2">@Mensaje</div>
-            }
+            </div>
         </div>
     </div>
-</div>
+</EditForm>
+
+ @if (!string.IsNullOrWhiteSpace(Mensaje))
+ {
+    <div class="alert alert-warning mt-2">@Mensaje</div>
+ }  
 
 @code {
     public EntradasHuacales Entrada { get; set; } = new();
     public string Mensaje { get; set; } = string.Empty;
+    public decimal Importe { get; set; }
+
+    private void CalcularImporte(ChangeEventArgs? e = null)
+    {
+        Importe = Entrada.Cantidad * Entrada.Precio;
+    }
 
     private async Task Guardar()
     {
+        if (Entrada.Cantidad <= 0 || Entrada.Precio <= 0)
+        {
+            Mensaje = "La cantidad y el precio deben ser mayores a cero.";
+            return;
+        }
+
         bool guardado = await EntradasHuacalesService.Guardar(Entrada);
 
         if (guardado)
