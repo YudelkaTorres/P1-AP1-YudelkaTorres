@@ -1,7 +1,9 @@
 ﻿@page "/EntradasHuacales/Edit/{EntradaId:int}"
 @using P1_AP1_YudelkaTorres.Models
-@using P1_AP1_YudelkaTorres.Service
-@inject EntradasHuacalesServices EntradasHuacalesService
+@using P1_AP1_YudelkaTorres.Services
+@using P1_AP1_YudelkaTorres.Extensors
+@inject BlazorBootstrap.ToastService toastService
+@inject EntradasHuacalesService EntradasHuacalesService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
@@ -60,6 +62,80 @@
                     <input class="form-control bg-light" value="@Importe.ToString("C")" readonly />
                 </div>
 
+                @*Detalle de huacales*@
+                <div class="border border-success p-3 mt-3">
+                    <h5>Detalles Huacales</h5>
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label"> Tipo de Huacal:</label>
+                            <select class="form-select" @bind="DetalleSeleccionado.TipoId">
+                                <option value="0" disabled>Seleccione un tipo</option>
+                                @foreach (var entradashuacalesTipos in TiposDisponibles)
+                                {
+                                    var agregada = Entrada.EntradasHuacalesDetalle
+                                    .Where(d => d.TipoId == entradashuacalesTipos.TipoId)
+                                    .Sum(d => d.Cantidad);
+                                    var restante = entradashuacalesTipos.Existencia - agregada;
+                                    if (restante > 0)
+                                    {
+                                        <option value="@entradashuacalesTipos.TipoId">@entradashuacalesTipos.Descripción (Existencia: @restante)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Cantidad:</label>
+                            <InputNumber class="form-control" @bind-Value="DetalleSeleccionado.Cantidad" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Precio:</label>
+                            <InputNumber class="form-control" @bind-Value="DetalleSeleccionado.Precio" />
+                        </div>
+
+                        <div class="col-md-2 d-flex justify-content-center">
+                            <button type="button" class="btn btn-success bi bi-plus-circle" @onclick="AgregarDetalle"> Agregar</button>
+                        </div>
+
+                    </div>
+
+                    @*Tabla de detalle*@
+                    <table class="table table-bordered align-middle text-center">
+                        <thead class="table table-striped">
+                            <tr class="text-center">
+                                <th>Tipo de Huacal:</th>
+                                <th>Cantidad:</th>
+                                <th>Precio:</th>
+                                <th>Remover</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entradahuacaldetalle in Entrada.EntradasHuacalesDetalle)
+                            {
+                                <tr>
+                                    <td>@ListaEntradasHuacalesTipos.FirstOrDefault(t => t.TipoId == entradahuacaldetalle.TipoId)?.Descripción</td>
+                                    <td>@entradahuacaldetalle.Cantidad</td>
+                                    <td>@entradahuacaldetalle.Precio</td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-danger bi bi-trash"
+                                                @onclick="() => RemoverentradahuacalDetalle(entradahuacaldetalle)"></button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (!string.IsNullOrWhiteSpace(Mensaje))
+                    {
+                        <div class="alert alert-danger mt-3">@Mensaje</div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Mensaje))
+                {
+                    <div class="alert alert-warning mt-2">@Mensaje</div>
+                }
+
                 @* Footer *@
                 <div class="card-footer text-center mt-2">
                     <a href="/EntradasHuacales/Index" class="btn btn-secondary">
@@ -72,30 +148,33 @@
     </div>
 </EditForm>
 
-@if (!string.IsNullOrWhiteSpace(Mensaje))
-{
-    <div class="alert alert-warning mt-2">@Mensaje</div>
-}
-
 @code {
     [Parameter]
     public int EntradaId { get; set; }
 
-    public EntradasHuacales Entrada { get; set; } = new();
+    public EntradasHuacales Entrada { get; set; } = new()
+    {
+        EntradasHuacalesDetalle = new List<EntradasHuacalesDetalle>()
+    };
+    public EntradasHuacalesDetalle DetalleSeleccionado { get; set; } = new();
+    public List<EntradasHuacalesTipos> ListaEntradasHuacalesTipos { get; set; } = new();
     public string Mensaje { get; set; } = string.Empty;
     public decimal Importe { get; set; }
 
-    private void CalcularImporte(ChangeEventArgs? e = null)
-    {
-        Importe = Entrada.Cantidad * Entrada.Precio;
-    }
+    private IEnumerable<EntradasHuacalesTipos> TiposDisponibles =>
+       ListaEntradasHuacalesTipos
+           .Where(t => t.Existencia > Entrada.EntradasHuacalesDetalle
+                       .Where(d => d.TipoId == t.TipoId)
+                       .Sum(d => d.Cantidad));
 
     protected override async Task OnInitializedAsync()
     {
+        ListaEntradasHuacalesTipos = await EntradasHuacalesService.ListarTipos();
         var entradaExistente = await EntradasHuacalesService.Buscar(EntradaId);
         if (entradaExistente != null)
         {
             Entrada = entradaExistente;
+            CalcularImporte();
         }
         else
         {
@@ -103,12 +182,67 @@
         }
     }
 
+    private void AgregarDetalle()
+    {
+        if (DetalleSeleccionado.TipoId == 0)
+        {
+            Mensaje = "Debe seleccionar un tipo de huacal.";
+            toastService.ShowError(Mensaje);
+            return;
+        }
+
+        var EntradashuacalesTipos = ListaEntradasHuacalesTipos.First(t => t.TipoId == DetalleSeleccionado.TipoId);
+
+        var cantidadAgregada = Entrada.EntradasHuacalesDetalle
+                                .Where(d => d.TipoId == EntradashuacalesTipos.TipoId)
+                                .Sum(d => d.Cantidad);
+
+        var disponible = EntradashuacalesTipos.Existencia - cantidadAgregada;
+
+        if (DetalleSeleccionado.Cantidad <= 0 || DetalleSeleccionado.Cantidad > disponible)
+        {
+            Mensaje = $"Cantidad inválida. Máximo disponible: {disponible}";
+            toastService.ShowError(Mensaje);
+            return;
+        }
+
+        Entrada.EntradasHuacalesDetalle.Add(new EntradasHuacalesDetalle
+        {
+            TipoId = DetalleSeleccionado.TipoId,
+            Cantidad = DetalleSeleccionado.Cantidad,
+            Precio = DetalleSeleccionado.Precio
+        });
+        DetalleSeleccionado = new EntradasHuacalesDetalle();
+        toastService.ShowSuccess("Detalle agregado correctamente.");
+        CalcularImporte();
+    }
+
+    private void RemoverentradahuacalDetalle(EntradasHuacalesDetalle entradasHuacalesDetalle)
+    {
+        Entrada.EntradasHuacalesDetalle.Remove(entradasHuacalesDetalle);
+        DetalleSeleccionado = new EntradasHuacalesDetalle();
+        CalcularImporte();
+    }
+
+    private void CalcularImporte(ChangeEventArgs? e = null)
+    {
+        Importe = Entrada.Cantidad * Entrada.Precio;
+    }
+
     private async Task Guardar()
     {
-        bool guardado = await EntradasHuacalesService.Guardar(Entrada);
+        if (!Entrada.EntradasHuacalesDetalle.Any())
+        {
+            Mensaje = "Debe agregar al menos un huacal al detalle.";
+            toastService.ShowError(Mensaje);
+            return;
+        }
+
+        var guardado = await EntradasHuacalesService.Guardar(Entrada);
 
         if (guardado)
         {
+            toastService.ShowSuccess("Entrada de huacales guardada correctamente");
             NavigationManager.NavigateTo("/EntradasHuacales/Index");
         }
         else

@@ -1,7 +1,7 @@
 ﻿@page "/EntradasHuacales/Index"
 @using P1_AP1_YudelkaTorres.Models
-@using P1_AP1_YudelkaTorres.Service
-@inject EntradasHuacalesServices entradasHuacalesServices
+@using P1_AP1_YudelkaTorres.Services
+@inject EntradasHuacalesService entradasHuacalesService
 @inject NavigationManager navigationManager
 @inject IJSRuntime JS
 @rendermode InteractiveServer
@@ -142,7 +142,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ListaEntradas = await entradasHuacalesServices.Listar(e => true);
+        ListaEntradas = await entradasHuacalesService.Listar(e => true);
     }
 
     private async Task Buscar()
@@ -150,13 +150,13 @@
         if (!string.IsNullOrWhiteSpace(ValorFiltro))
         {
             if (Filtro == "EntradaId" && int.TryParse(ValorFiltro, out int Id))
-                ListaEntradas = await entradasHuacalesServices.Listar(e => e.EntradaId == Id);
+                ListaEntradas = await entradasHuacalesService.Listar(e => e.EntradaId == Id);
             else if (Filtro == "NombreCliente")
-                ListaEntradas = await entradasHuacalesServices.Listar(e => e.NombreCliente.ToLower().Contains(ValorFiltro.ToLower()));
+                ListaEntradas = await entradasHuacalesService.Listar(e => e.NombreCliente.ToLower().Contains(ValorFiltro.ToLower()));
         }
         else
         {
-            ListaEntradas = await entradasHuacalesServices.Listar(e => true);
+            ListaEntradas = await entradasHuacalesService.Listar(e => true);
         }
 
         if (FechaInicio.HasValue && FechaFin.HasValue)
@@ -175,7 +175,7 @@
 
     private async Task Restablecer()
     {
-        ListaEntradas = await entradasHuacalesServices.Listar(e => true);
+        ListaEntradas = await entradasHuacalesService.Listar(e => true);
         Filtro = string.Empty;
         ValorFiltro = string.Empty;
     }
@@ -196,8 +196,8 @@
     {
         if (EntradaSeleccionada != null)
         {
-            await entradasHuacalesServices.Eliminar(EntradaSeleccionada.EntradaId);
-            ListaEntradas = await entradasHuacalesServices.Listar(e => true);
+            await entradasHuacalesService.Eliminar(EntradaSeleccionada.EntradaId);
+            ListaEntradas = await entradasHuacalesService.Listar(e => true);
             EntradaSeleccionada = null;
             MostrarPanelEliminar = false;
         }
