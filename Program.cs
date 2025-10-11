@@ -1,7 +1,7 @@
 using P1_AP1_YudelkaTorres.Components;
 using P1_AP1_YudelkaTorres.DAL;
 using Microsoft.EntityFrameworkCore;
-using P1_AP1_YudelkaTorres.Service;
+using P1_AP1_YudelkaTorres.Services;
 
 namespace P1_AP1_YudelkaTorres;
 
@@ -19,7 +19,10 @@ public class Program
 
         builder.Services.AddDbContextFactory<Contexto>(options => options.UseSqlite(ConnectionString));
 
-        builder.Services.AddScoped<EntradasHuacalesServices>();
+        builder.Services.AddScoped<EntradasHuacalesService>();
+
+        //Inyeccion del Bootstrap
+        builder.Services.AddBlazorBootstrap();
 
         var app = builder.Build();
 
