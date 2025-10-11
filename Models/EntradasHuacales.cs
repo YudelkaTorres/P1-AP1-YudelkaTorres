@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace P1_AP1_YudelkaTorres.Models;
 public class EntradasHuacales
@@ -17,4 +18,10 @@ public class EntradasHuacales
     [Required]
     [Range(0.0, double.MaxValue, ErrorMessage = "El precio debe ser mayor o igual a 0")]
     public decimal Precio { get; set; }
+
+    [ForeignKey("EntradaHuacalTipo")]
+    public int TipoId { get; set; }
+
+    [InverseProperty("EntradaHuacal")]
+    public virtual ICollection<EntradasHuacalesDetalle> EntradasHuacalesDetalle{ get; set; } = new List<EntradasHuacalesDetalle>();
 }
